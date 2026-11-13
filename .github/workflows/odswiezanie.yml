@@ -1,0 +1,78 @@
+# Codzienne odswiezanie danych i publikacja strony (GitHub Pages).
+# 13:30 czasu polskiego: zima = 12:30 UTC, lato = 11:30 UTC - uruchamiamy o obu godzinach,
+# a krok "Czy to 13:xx w Polsce" przepuszcza tylko wlasciwa.
+name: Odswiezanie aukcji
+
+on:
+  schedule:
+    - cron: '30 11 * * *'
+    - cron: '30 12 * * *'
+  workflow_dispatch:
+    inputs:
+      tryb:
+        description: 'full = wszystko, rate = tylko kurs jena'
+        default: 'full'
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: odswiezanie
+  cancel-in-progress: false
+
+jobs:
+  odswiez:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Czy to 13:xx w Polsce
+        id: czas
+        shell: pwsh
+        run: |
+          # Uruchom przy pierwszym wywolaniu po 13:00 czasu polskiego, o ile dzis jeszcze nie odswiezano.
+          $tz = [TimeZoneInfo]::FindSystemTimeZoneById('Europe/Warsaw')
+          $now = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $tz)
+          $last = ''
+          if (Test-Path state/rate.json) {
+            $f = (Get-Content state/rate.json -Raw | ConvertFrom-Json).fetched
+            if ($f) { $last = [TimeZoneInfo]::ConvertTimeFromUtc(([DateTime]$f).ToUniversalTime(), $tz).ToString('yyyy-MM-dd') }
+          }
+          $ok = ('${{ github.event_name }}' -eq 'workflow_dispatch') -or ($now.Hour -ge 13 -and $last -ne $now.ToString('yyyy-MM-dd'))
+          "run=$($ok.ToString().ToLower())" >> $env:GITHUB_OUTPUT
+
+      - name: Pobierz aukcje i wyceny
+        if: steps.czas.outputs.run == 'true'
+        shell: pwsh
+        env:
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: ./scraper/run.ps1 -Mode ${{ github.event.inputs.tryb || 'full' }}
+
+      - name: Zapisz dane w repozytorium
+        if: steps.czas.outputs.run == 'true'
+        run: |
+          git config user.name "aukcje-bot"
+          git config user.email "aukcje-bot@users.noreply.github.com"
+          git add -A state site/data
+          git diff --cached --quiet || git commit -m "Dane z $(date -u +%Y-%m-%d)"
+          git push
+
+      - name: Przygotuj strone
+        if: steps.czas.outputs.run == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Opublikuj strone
+        if: steps.czas.outputs.run == 'true'
+        id: deploy
+        uses: actions/deploy-pages@v4

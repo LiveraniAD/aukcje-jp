@@ -1,0 +1,32 @@
+{
+  "costs": {
+    "transportPln": 12000,
+    "dutyPct": 10,
+    "exciseSmallPct": 3.1,
+    "exciseLargePct": 18.6,
+    "exciseThresholdCc": 2000,
+    "vatPct": 23
+  },
+  "valuation": {
+    "safetyDiscountPct": 15,
+    "targetMarginPct": 15,
+    "yearTolerance": 1,
+    "capacityTolerancePct": 6,
+    "mileageTolerancePct": 30,
+    "mileageToleranceMinKm": 25000,
+    "cacheHours": 40,
+    "maxPagesPerQuery": 3
+  },
+  "estimate": {
+    "defaultBidMultiplier": 1.25
+  },
+  "gems": {
+    "minProfitPct": 30,
+    "minComparables": 8
+  },
+  "scraper": {
+    "delayMs": 1200,
+    "userAgent": "Mozilla/5.0 (compatible; prywatny-kalkulator-aukcji/1.0)",
+    "fabrykaMaxPages": 30
+  }
+}
