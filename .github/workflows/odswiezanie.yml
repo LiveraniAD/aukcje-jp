@@ -5,8 +5,9 @@ name: Odswiezanie aukcji
 
 on:
   schedule:
-    - cron: '30 11 * * *'
-    - cron: '30 12 * * *'
+    # GitHub potrafi opoznic zaplanowane uruchomienie nawet o kilka godzin, dlatego prob jest duzo
+    # (co 30 minut). Prawdziwe odswiezanie robi tylko pierwsza proba po 13:30 czasu polskiego.
+    - cron: '7,37 6-20 * * *'
   workflow_dispatch:
     inputs:
       tryb:
@@ -39,12 +40,14 @@ jobs:
           # Uruchom przy pierwszym wywolaniu po 13:00 czasu polskiego, o ile dzis jeszcze nie odswiezano.
           $tz = [TimeZoneInfo]::FindSystemTimeZoneById('Europe/Warsaw')
           $now = [TimeZoneInfo]::ConvertTimeFromUtc([DateTime]::UtcNow, $tz)
-          $last = ''
+          $start = $now.Date.AddHours(13).AddMinutes(30)
+          $last = [DateTime]::MinValue
           if (Test-Path state/rate.json) {
             $f = (Get-Content state/rate.json -Raw | ConvertFrom-Json).fetched
-            if ($f) { $last = [TimeZoneInfo]::ConvertTimeFromUtc(([DateTime]$f).ToUniversalTime(), $tz).ToString('yyyy-MM-dd') }
+            if ($f) { $last = [TimeZoneInfo]::ConvertTimeFromUtc(([DateTime]$f).ToUniversalTime(), $tz) }
           }
-          $ok = ('${{ github.event_name }}' -eq 'workflow_dispatch') -or ($now.Hour -ge 13 -and $last -ne $now.ToString('yyyy-MM-dd'))
+          $ok = ('${{ github.event_name }}' -eq 'workflow_dispatch') -or ($now -ge $start -and $last -lt $start)
+          "Teraz (PL): $now, ostatnie odswiezenie (PL): $last, uruchamiam: $ok"
           "run=$($ok.ToString().ToLower())" >> $env:GITHUB_OUTPUT
 
       - name: Pobierz aukcje i wyceny

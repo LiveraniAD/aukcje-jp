@@ -213,6 +213,8 @@
     var dOpts = '<option value="">Wszystkie dni</option>' + Object.keys(dates).sort().map(function (d) { return '<option value="' + d + '"' + (F.date === d ? ' selected' : '') + '>' + dmy(d) + ' – ' + when(d) + ' (' + dates[d] + ')</option>'; }).join('');
     function opt(v, l, cur) { return '<option value="' + v + '"' + (String(cur) === String(v) ? ' selected' : '') + '>' + l + '</option>'; }
     var h = '';
+    var fmt = { dateStyle: 'short', timeStyle: 'short' };
+    h += '<p class="muted small" style="margin:14px 0 0">Aukcje odświeżone: <b>' + (META.updated ? new Date(META.updated).toLocaleString('pl-PL', fmt) : '—') + '</b> · kurs jena: NBP z dnia <b>' + dmy(RATE.date) + '</b>' + (RATE.fetched ? ' (sprawdzony ' + new Date(RATE.fetched).toLocaleString('pl-PL', fmt) + ')' : '') + '. NBP nie publikuje kursów w weekendy i święta, wtedy obowiązuje ostatni kurs.</p>';
     if (META.partial) h += '<div class="note">Dane testowe: wycenę ma tylko część aut (pełne odświeżenie jeszcze trwa lub nie zostało wykonane).</div>';
     h += '<div class="bar">' +
       '<label>Marka<select id="f-brand">' + bOpts + '</select></label>' +
