@@ -165,6 +165,7 @@
 
   // ---------- nagłówek / stopka ----------
   function renderChrome(active) {
+    document.getElementById('upd').innerHTML = META.updated ? 'Aktualizacja <b>' + stamp(META.updated) + '</b>' : '';
     document.getElementById('rate').innerHTML = RATE.mid ? '1' + NB + '000' + NB + '000' + NB + '¥ = <b>' + pln(RATE.mid * 1e6) + '</b><span class="rate-date"> · NBP ' + dm(RATE.date) + '</span>' : '';
     Array.prototype.forEach.call(document.querySelectorAll('.tabs a'), function (a) { a.classList.toggle('on', a.getAttribute('data-nav') === active); });
     var cn = META.counts || {};
@@ -267,14 +268,7 @@
     var cn = META.counts || {};
     var open = !!store.get('panelOpen', false);
 
-    var h = '<div class="page">' +
-      '<section class="hero"><h1>Aukcje aut z Japonii.</h1><p>Sprawdź, ile takie samo auto kosztuje w Polsce i do jakiej kwoty opłaca się licytować.</p>' +
-      '<div class="stats">' +
-      '<div class="stat"><div class="l">Aukcje z ceną wywoławczą</div><div class="v num">' + CARS.length + '</div><div class="s">z ' + (cn.unique || CARS.length) + ' unikalnych po scaleniu</div></div>' +
-      '<div class="stat"><div class="l">Perełki</div><div class="v num">' + gemsAll + '</div><div class="s">opłacalność od ' + GEM.minProfit + '%</div></div>' +
-      '<div class="stat"><div class="l">1' + NB + '000' + NB + '000' + NB + '¥</div><div class="v num">' + (RATE.mid ? pln(RATE.mid * 1e6) : '—') + '</div><div class="s">kurs NBP z ' + dmy(RATE.date) + '</div></div>' +
-      '<div class="stat"><div class="l">Ostatnia aktualizacja</div><div class="v num">' + stamp(META.updated) + '</div><div class="s">codziennie po 13:30</div></div>' +
-      '</div></section>';
+    var h = '<div class="page">';
     if (META.partial) h += '<div class="banner">Dane testowe: wycenę ma tylko część aut.</div>';
     h += '<div class="toolbar">' +
       '<label class="search">' + IC.search + '<input id="f-q" type="search" placeholder="Szukaj: marka, model, rocznik, numer lotu" value="' + esc(F.q) + '" aria-label="Szukaj aukcji"></label>' +
